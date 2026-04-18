@@ -1,0 +1,91 @@
+name: voxabook
+services:
+  db:
+    image: postgres:18
+    restart: always
+    volumes:
+      - db-data:/var/lib/postgresql/data/pgdata
+    env_file:
+      - .env
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
+      - POSTGRES_DB=${POSTGRES_DB?Variable not set}
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+  backend:
+    restart: unless-stopped
+    env_file:
+      - .env
+    build:
+      context: ./backend/
+      dockerfile: Dockerfile
+    ports:
+      - 8000:8000
+    volumes:
+      - "./backend/app/alembic/:/backend/app/alembic/"
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+    develop:
+      watch:
+        - path: ./backend
+          action: sync
+          target: /backend
+          ignore:
+            - ./backend/app/alembic/
+            - ./backend/.venv
+            - .venv
+        - path: ./backend/pyproject.toml
+          action: rebuild
+    command:
+      - "fastapi"
+      - "run"
+      - "app/main.py"
+      - "--reload"
+
+  frontend:
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - 5173:5173
+    build:
+      context: ./frontend/
+      dockerfile: Dockerfile
+    # volumes:
+    #   - "./frontend/:/frontend/"
+    command:
+      - "bun"
+      - "--env-file=./.env"
+      - "run"
+      - "dev"
+      - "--"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "5173"
+    develop:
+      watch:
+        - path: ./frontend
+          action: sync
+          target: /usr/src/app
+          ignore:
+            - ./frontend/node_modules/
+        - path: ./frontend/bun.lock
+          action: rebuild
+        - path: ./frontend/package.json
+          action: rebuild
+
+volumes:
+  db-data:

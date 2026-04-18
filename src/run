@@ -1,0 +1,13 @@
+#!/usr/bin/env zsh
+
+# author: raxen001
+# email: raxen001@tutamail.com
+# Used to start the current project in proper zellij tabs and panes.
+
+zellij action rename-tab "DOCKER"
+zellij run --name "watch" -- zsh -ic "/usr/bin/docker compose down && /usr/bin/docker compose watch"
+# zellij run --name "frontend logs" -- zsh -ic "/usr/bin/docker compose logs -f frontend"
+zellij run --name "backend logs" -- zsh -ic "/usr/bin/docker compose logs -f backend"
+zellij run --name "exec" -- zsh -ic "/usr/bin/docker compose exec -it backend bash"
+zellij action new-tab --name "BACKEND" --cwd backend/
+# zellij action new-tab --name "FRONTEND" --cwd frontend/
