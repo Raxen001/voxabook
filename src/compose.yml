@@ -1,7 +1,7 @@
 name: voxabook
 services:
   db:
-    image: postgres:18
+    build: .
     restart: always
     volumes:
       - db-data:/var/lib/postgresql/data/pgdata
