@@ -1,7 +1,5 @@
-
-import uuid
-from sqlmodel import Field
 from .base import Base
+
 
 class Book(Base, table=True):
     title: str
